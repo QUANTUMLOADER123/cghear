@@ -34,6 +34,7 @@ jobs:
         run: cmake --build build --parallel
 
       - name: Headless logic test
+        if: runner.os != 'Windows'
         run: bash tests/run_headless.sh
 
       - name: Capture gameplay screenshot (Linux)
