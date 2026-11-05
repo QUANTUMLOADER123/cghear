@@ -1,0 +1,8 @@
+build/
+build-android/
+*.o
+*.apk
+*.keystore
+hyperstack_best.txt
+/gameplay.png
+.DS_Store
