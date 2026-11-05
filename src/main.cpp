@@ -304,7 +304,7 @@ struct Game
         else       { s.z = (nLo + nHi) / 2.0f; s.hz = (nHi - nLo) / 2.0f; s.x = p.x; s.hx = curHx; }
         tower.push_back(s);
 
-        if (perfect) {
+        if (perfect && state == State::PLAY) {   // (menu diorama stays clean)
             rings.push_back(Ring{ s.x, s.z, s.y, 0.0f, goldColor(GetTime()) });
             if (combo >= 2)
                 popupAt(s.x, s.y + BLOCK_H + 36, s.z, TextFormat("PERFECT x%d", combo), goldColor(GetTime()), 44);
@@ -332,6 +332,13 @@ struct Game
         stateT += dt;
         tapCd  -= dt;
 
+#ifdef HS_HEADLESS
+        static int simTick = 0;
+        if (++simTick % 600 == 0)
+            std::printf("[sim] t=%d state=%d level=%d combo=%d best=%d\n",
+                        simTick, (int)state, level, combo, best);
+#endif
+
         if (state != State::DEAD) {
             pos += dir * speed * dt;
             if (pos > sMax) { pos = sMax; dir = -1.0f; }
@@ -340,7 +347,15 @@ struct Game
             if (state == State::MENU) {           // menu autopilot: always perfect
                 const Slab &p = tower.back();
                 float c = axisX ? p.x : p.z;
-                if ((dir > 0 && pos >= c) || (dir < 0 && pos <= c)) place();
+                if ((dir > 0 && pos >= c) || (dir < 0 && pos <= c)) {
+                    place();
+                    if ((int)tower.size() > 12) { // keep the diorama short:
+                        tower.resize(1);          // camera glides down to a
+                        level = 1;                // fresh tower, ambient loop
+                        combo = 0;
+                        spawnCur();
+                    }
+                }
             }
         }
 
@@ -351,8 +366,10 @@ struct Game
         if (tap && tapCd <= 0.0f) {
             tapCd = 0.14f;
             if (state == State::MENU) {
-                state = State::PLAY; stateT = 0.0f;
-                speed = std::min(MAX_SPEED, BASE_SPEED + (float)(level - 1) * SPEED_STEP);
+                float keepCamY = camY, keepZoom = camZoom;
+                reset(false);                  // fresh run from the demo tower
+                camY = keepCamY;               // camera glides down to the base
+                camZoom = keepZoom;
                 PlaySound(sndThud);
             }
             else if (state == State::PLAY) place();
