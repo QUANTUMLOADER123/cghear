@@ -15,6 +15,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# on failure, dump the error tail into GitHub annotations (readable via API)
+LOG=/tmp/hyperstack_build.log
+exec > >(tee "$LOG") 2>&1
+trap 'rc=$?; if [ $rc -ne 0 ]; then
+    echo "::group::HYPERSTACK build failure (exit $rc)"; tail -40 "$LOG"; echo "::endgroup::";
+    tail -20 "$LOG" | while IFS= read -r l; do echo "::error::$l"; done
+fi' EXIT
+
 API=34
 BT=34.0.0
 OUT=build-android
@@ -62,13 +70,16 @@ find "$OUT/classes" -name '*.class' > "$OUT/classes.txt"
     --output "$OUT" $(cat "$OUT/classes.txt")
 cp "$OUT/classes.dex" "$OUT/pkg/"
 
-echo "==> [3/5] native lib (ndk-build): $ABIS"
-ndk-build -j4 \
-    NDK_PROJECT_PATH="$OUT" \
-    APP_BUILD_SCRIPT=android/Android.mk \
-    NDK_APPLICATION_MK=android/Application.mk \
-    NDK_OUT="$OUT/obj" \
-    NDK_LIBS_OUT="$OUT/raw"
+echo "==> [3/5] native lib: $ABIS"
+NDKBUILD="$ANDROID_NDK/ndk-build"
+[ -f "$NDKBUILD" ] || NDKBUILD="$ANDROID_NDK/ndk-build.cmd"
+[ -f "$NDKBUILD" ] || { echo "ERROR: ndk-build not found in $ANDROID_NDK"; exit 1; }
+"$NDKBUILD" -j4 \
+    NDK_PROJECT_PATH="$PWD/$OUT" \
+    APP_BUILD_SCRIPT="$PWD/android/Android.mk" \
+    NDK_APPLICATION_MK="$PWD/android/Application.mk" \
+    NDK_OUT="$PWD/$OUT/obj" \
+    NDK_LIBS_OUT="$PWD/$OUT/raw"
 cp -r "$OUT/raw/lib" "$OUT/pkg/lib"
 
 echo "==> [4/5] packaging"
