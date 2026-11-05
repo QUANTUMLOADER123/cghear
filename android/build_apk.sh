@@ -81,7 +81,11 @@ NDKBUILD="$ANDROID_NDK/ndk-build"
     NDK_APPLICATION_MK="$PWD/android/Application.mk" \
     NDK_OUT="$PWD/$OUT/obj" \
     NDK_LIBS_OUT="$PWD/$OUT/raw"
-cp -r "$OUT/raw/lib" "$OUT/pkg/lib"
+# ndk-build installs to $NDK_LIBS_OUT/<abi>/libmain.so — repack as lib/<abi>/
+rm -rf "$OUT/pkg/lib"
+mkdir -p "$OUT/pkg"
+cp -r "$OUT/raw" "$OUT/pkg/lib"
+ls -R "$OUT/pkg/lib" | head -10
 
 echo "==> [4/5] packaging"
 cp "$OUT/base.apk" "$OUT/unsigned.apk"

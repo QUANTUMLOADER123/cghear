@@ -13,6 +13,8 @@
 
 ---
 
+<img src="docs/gameplay.png" alt="HYPERSTACK gameplay" width="360" align="right"/>
+
 ## The game
 
 A slab slides over the tower — **tap to drop it**. Whatever hangs over the edge
