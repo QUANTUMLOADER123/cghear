@@ -32,9 +32,18 @@ jobs:
           ndk-version: r27c
 
       - name: Build APK (aapt2 + d8 + ndk-build, no Gradle)
-        env:
-          ANDROID_NDK: ${{ steps.ndk.outputs.path }}
         run: |
+          # resolve NDK: setup-ndk output (either key), else preinstalled SDK copy
+          ANDROID_NDK=""
+          for d in "${{ steps.ndk.outputs.ndk-root }}" "${{ steps.ndk.outputs.path }}" \
+                   $ANDROID_HOME/ndk/*/ ; do
+              if [ -n "$d" ] && [ -f "$d/ndk-build" ]; then
+                  ANDROID_NDK="$(realpath "$d")"; break
+              fi
+          done
+          [ -n "$ANDROID_NDK" ] || { echo "::error::no Android NDK found"; exit 1; }
+          echo "Using NDK: $ANDROID_NDK"
+          export ANDROID_NDK
           bash android/build_apk.sh > build.log 2>&1 || { tail -60 build.log; exit 1; }
           tail -20 build.log
 
