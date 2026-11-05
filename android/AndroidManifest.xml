@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HYPERSTACK - pure native NativeActivity app (hasCode="false"):
+     no Java/Kotlin, the APK contains only libmain.so. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.hyperstack.game"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <application
+        android:label="HYPERSTACK"
+        android:icon="@mipmap/ic_launcher"
+        android:hasCode="false"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+        android:hardwareAccelerated="true">
+
+        <activity
+            android:name="android.app.NativeActivity"
+            android:label="HYPERSTACK"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize">
+
+            <meta-data android:name="android.app.lib_name" android:value="main" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

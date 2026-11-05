@@ -1,0 +1,61 @@
+name: desktop
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest }
+          - { os: windows-latest }
+          - { os: macos-latest }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install X11/GL deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+            libxi-dev libgl1-mesa-dev libglu1-mesa-dev xvfb
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Headless logic test
+        run: bash tests/run_headless.sh
+
+      - name: Capture gameplay screenshot (Linux)
+        if: runner.os == 'Linux'
+        env:
+          HYPERSHOT: gameplay.png
+        run: xvfb-run -a ./build/hyperstack
+
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: gameplay-screenshot
+          path: gameplay.png
+
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows'
+        with:
+          name: hyperstack-windows
+          path: build/Release/hyperstack.exe
+
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'macOS'
+        with:
+          name: hyperstack-macos
+          path: build/hyperstack
