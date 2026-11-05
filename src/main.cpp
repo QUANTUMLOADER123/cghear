@@ -280,7 +280,16 @@ struct Game
             nHi = std::min(hi, cp + hp);
         }
 
-        if (nHi - nLo < MIN_SLAB) { die(); return; }
+        if (nHi - nLo < MIN_SLAB) {
+            if (state == State::MENU) {       // demo must never die: rebuild
+                tower.resize(1);
+                level = 1; combo = 0;
+                spawnCur();
+                return;
+            }
+            die();
+            return;
+        }
 
         if (perfect) {
             combo++;
@@ -344,10 +353,14 @@ struct Game
             if (pos > sMax) { pos = sMax; dir = -1.0f; }
             if (pos < sMin) { pos = sMin; dir =  1.0f; }
 
-            if (state == State::MENU) {           // menu autopilot: always perfect
-                const Slab &p = tower.back();
+            if (state == State::MENU) {           // attract mode: human-ish play,
+                const Slab &p = tower.back();     // small errors -> stepped tower
                 float c = axisX ? p.x : p.z;
-                if ((dir > 0 && pos >= c) || (dir < 0 && pos <= c)) {
+                float half = axisX ? p.hx : p.hz;
+                float err = 0.0f;
+                if (half > 50.0f)                 // never let the demo die
+                    err = (float)GetRandomValue(-100, 100) / 100.0f * 14.0f;
+                if ((dir > 0 && pos >= c + err) || (dir < 0 && pos <= c + err)) {
                     place();
                     if ((int)tower.size() > 12) { // keep the diorama short:
                         tower.resize(1);          // camera glides down to a
