@@ -19,8 +19,9 @@ cd "$(dirname "$0")/.."
 LOG=/tmp/hyperstack_build.log
 exec > >(tee "$LOG") 2>&1
 trap 'rc=$?; if [ $rc -ne 0 ]; then
-    echo "::group::HYPERSTACK build failure (exit $rc)"; tail -40 "$LOG"; echo "::endgroup::";
-    tail -20 "$LOG" | while IFS= read -r l; do echo "::error::$l"; done
+    sleep 3
+    echo "::group::HYPERSTACK build failure (exit $rc)"; tail -60 "$LOG"; echo "::endgroup::";
+    tail -35 "$LOG" | while IFS= read -r l; do echo "::error::$l"; done
 fi' EXIT
 
 API=34
